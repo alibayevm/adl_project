@@ -1,5 +1,5 @@
 # ADL Project
-Project for Advanced Deep Learning course, focused on verb classification in videos from EPIC Kitchens dataset using embedding concepts. The work is based on the *Fine-Grained Action Retrieval Through Multiple Parts-of-Speech Embeddings* [http://openaccess.thecvf.com/content_ICCV_2019/papers/Wray_Fine-Grained_Action_Retrieval_Through_Multiple_Parts-of-Speech_Embeddings_ICCV_2019_paper.pdf](paper).
+Project for Advanced Deep Learning course, focused on verb classification in videos from EPIC Kitchens dataset using embedding concepts. The work is based on the *Fine-Grained Action Retrieval Through Multiple Parts-of-Speech Embeddings* [paper](http://openaccess.thecvf.com/content_ICCV_2019/papers/Wray_Fine-Grained_Action_Retrieval_Through_Multiple_Parts-of-Speech_Embeddings_ICCV_2019_paper.pdf).
 
 ## The breakdown of the repository tree
 The repository has the following directories and subdirectories:
@@ -15,15 +15,15 @@ The repository has the following directories and subdirectories:
 * test.py - evaluates the selected model.
 
 ## Task list
-- [] - Build dataset from many shot verbs. Use 60-20-20 split.
-- [] - Get different word embeddings for the verb classes.
-- [] - Come up with the list of hyper parameters for **params.json** files.
-- [] - Come up with the list of experiments.
-- [] - Process videos into TensorFlow dataset object.
-- [] - Build the model.
-- [] - Build the evaluation procedure.
-- [] - Build the training procedure.
-- [] - Train the models.
-- [] - Evaluate the models.
-- [] - Train the baseline models with one-hot encoding.
-- [] - Compare the embedding strategy with one-hot encoding strategy.
+- [ ] - Build dataset from many shot verbs. Use 60-20-20 split.
+- [ ] - Get different word embeddings for the verb classes.
+- [ ] - Come up with the list of hyper parameters for **params.json** files.
+- [ ] - Come up with the list of experiments.
+- [ ] - Process videos into TensorFlow dataset object.
+- [ ] - Build the model.
+- [ ] - Build the evaluation procedure.
+- [ ] - Build the training procedure.
+- [ ] - Train the models.
+- [ ] - Evaluate the models.
+- [ ] - Train the baseline models with one-hot encoding.
+- [ ] - Compare the embedding strategy with one-hot encoding strategy.
