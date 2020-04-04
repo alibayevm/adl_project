@@ -1,0 +1,31 @@
+{
+    "baseline" : "i3d",
+    
+    "batch_size" : 256,
+    "num_frames" : 25,
+    "sampling_rate" : 0,
+    "frame_size" : 224,
+    "num_classes" : 26,
+
+    "feature_size" : 1024,
+    
+    "lambda_within" : 0.1,
+    "lambda_cross" : 1.0,
+
+    "learning_rate" : 1e-5,
+    "margin" : 0.5,
+    "num_total_steps" : 4000,
+    "num_triplets" : 100,
+
+    "fc1" : 256,
+    "fc2" : 256,
+
+    "prefetch_train" : 1,
+    "prefetch_test" : 1,
+    "num_parallel_calls" : 1,
+
+    "word_embedding": "w2v100",
+
+    "restore_path_rgb" : "/home/maxat/data/checkpoints/rgb_imagenet/model.ckpt",
+    "restore_path_flow" : "/home/maxat/data/checkpoints/flow_imagenet/model.ckpt"
+}
