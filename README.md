@@ -14,7 +14,7 @@ The repository has the following directories and subdirectories:
 * test.py - evaluates the selected model.
 
 ## Task list
-- [ ] - Build dataset from many shot verbs. Use 60-20-20 split.
+- [x] - Build dataset from many shot verbs. Use 60-20-20 split. Need to figure out if we need a validation set or not. Technically, we need it for one-hot classifier, but not for the model based on embedding. We could have 80/20 split for train/test, then split train into 60/20 train/valid splits when training one-hot representation.
 - [ ] - Get different word embeddings for the verb classes.
 - [ ] - Get word embeddings for each verb in each video.
 - [x] - Come up with the list of hyper parameters for **params.json** files.
@@ -27,5 +27,4 @@ The repository has the following directories and subdirectories:
 - [ ] - Evaluate the models.
 - [ ] - Train the baseline models with one-hot encoding.
 - [ ] - Compare the embedding strategy with one-hot encoding strategy.
-- [ ] - Need to figure out if we need a validation set or not. Technically, we need it for one-hot classifier, but not for the model based on embedding. We could have 80/20 split for train/test, then split train into 60/20 train/valid splits when training one-hot representation.
 - [ ] - Think about which metrics to use, can use Precision and Recall along with Accuracy. Dataset is unbalanced, so 1-h method will favor 4/26 huge classes.
