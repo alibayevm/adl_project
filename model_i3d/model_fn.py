@@ -77,6 +77,8 @@ def model_fn(inputs, params, is_training):
 
         for variable in tf.global_variables():
             var_name = variable.name.split('/')
+            if var_name[0] != 'Model':
+                continue
             if var_name[1] == 'RGB' and var_name[2] == 'inception_i3d' and var_name[3] not in top_variables:
                 variable_map_rgb[variable.name.replace(':0', '')] = variable
             if var_name[1] == 'Flow' and var_name[2] == 'inception_i3d' and var_name[3] not in top_variables:
@@ -84,12 +86,17 @@ def model_fn(inputs, params, is_training):
             if var_name[3] in top_variables or var_name[1] in top_variables:
                 train_vars.append(variable)
 
-        lr = tf.placeholder(tf.float32)
-        optimizer = tf.train.AdamOptimizer(learning_rate=lr)
+        optimizer = tf.train.AdamOptimizer(learning_rate=params.learning_rate)
 
         with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
             train_op_initial = optimizer.minimize(total_loss, var_list=train_vars)
             train_op = optimizer.minimize(total_loss)
+    else:
+        variable_map = {}
+        for variable in tf.global_variables():
+            var_name = variable.name.split('/')
+            if var_name[0] == 'Model':
+                variable_map[variable.name.replace(':0', '')] = variable
 
     # TODO: add metrics tensor and ops to update it
 
@@ -106,7 +113,8 @@ def model_fn(inputs, params, is_training):
         model_spec['train_op'] = train_op
         model_spec['variable_map_rgb'] = variable_map_rgb   
         model_spec['variable_map_flow'] = variable_map_flow
-        model_spec['lr'] = lr
+    else:
+        model_spec['variable_map'] = variable_map
     
     return model_spec
 
