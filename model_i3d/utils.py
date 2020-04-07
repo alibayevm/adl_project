@@ -84,7 +84,7 @@ def data_info(split_name):
 
     for i, line in enumerate(dataset_info_file):
         info = line.strip().split(' ')
-        info.append(str(i))
+        info[-1] = str(i)
         dataset_info.append(info)
 
     return dataset_info
