@@ -24,7 +24,7 @@
     "prefetch_test" : 1,
     "num_parallel_calls" : 1,
 
-    "word_embedding": "w2v100",
+    "word_embedding": "w2v_wiki_100",
 
     "restore_path_rgb" : "/home/maxat/data/checkpoints/rgb_imagenet/model.ckpt",
     "restore_path_flow" : "/home/maxat/data/checkpoints/flow_imagenet/model.ckpt"
