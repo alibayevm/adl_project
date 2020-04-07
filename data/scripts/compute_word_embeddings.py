@@ -4,6 +4,7 @@ import numpy as np
 import os
 import pandas as pd
 import argparse
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser()
 parser.add_argument("model_name")
@@ -41,7 +42,7 @@ if __name__ == "__main__":
     train = open(os.path.join('..', 'splits', 'train_embedding.txt'), 'r')
     train_vecotrs = []
     
-    for line in train:
+    for line in tqdm(train):
         verb = line.strip().split(' ')[-1]
         words = verb.split('-')
         vector = np.zeros(dimensions, dtype=np.float32)
