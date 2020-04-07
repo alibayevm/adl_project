@@ -86,7 +86,7 @@ def get_frames_and_labels(data, num_frames, sampling_rate, modality, word_embedd
     if modality != 'rgb':
         # Get word embedding
         if is_training:
-            words = np.load(os.path.join('data', 'word_embeddings', word_embedding + '.npy'))
+            words = np.load(os.path.join('data', 'word_embeddings', word_embedding + '_train.npy'))
             word = words[sample_index]
         else:
             words = np.load(os.path.join('data', 'word_embeddings', word_embedding + '_classkeys.npy'))
