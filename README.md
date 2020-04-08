@@ -28,3 +28,4 @@ The repository has the following directories and subdirectories:
 - [ ] - Train the baseline models with one-hot encoding.
 - [ ] - Compare the embedding strategy with one-hot encoding strategy.
 - [ ] - Think about which metrics to use, can use Precision and Recall along with Accuracy. Dataset is unbalanced, so 1-h method will favor 4/26 huge classes.
+- [ ] - Will probably have to precompute the extracted RGB and Flow features from Deep networks due to memory limitations. 
