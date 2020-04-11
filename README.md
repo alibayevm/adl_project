@@ -32,4 +32,5 @@ The repository has the following directories and subdirectories:
 - [x] - Will probably have to precompute the extracted RGB and Flow features from Deep networks due to memory limitations. 
 
 ## How to run training
+Replace __tsn_resnet50_flow.npy__ and __tsn_resnet50_rgb.npy__ in __model_epic/visual_features__ directory with files from project Google Drive directory. Then run:
 `python train.py path_to_experiment_dir`
