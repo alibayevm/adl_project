@@ -10,18 +10,23 @@ parser = argparse.ArgumentParser()
 parser.add_argument("model_name")
 args = parser.parse_args()
 
-def compute_embedding(model_name, word):
+def compute_embedding(model_name, model, word):
     if 'wiki' in model_name:
-        model = Wikipedia2Vec.load(model_name)
         return model.get_word_vector(word)
+    # FIXME (fixed): Stops at video 480 of training set or computes too slow
+    # FIXME: Word `of` is not in dictionary
     elif 'google' in model_name:
-        model = gensim.models.KeyedVectors.load_word2vec_format(model_name, binary=True)
         return model[word]
 
 if __name__ == "__main__":
     model_name = args.model_name
     dimensions = int(model_name.split('.')[0][-3:])
     
+    if 'wiki' in model_name:
+        model = Wikipedia2Vec.load(model_name)
+    elif 'google' in model_name:
+        model = gensim.models.KeyedVectors.load_word2vec_format(model_name, binary=True)
+
     # Class keys
     manyshots = pd.read_csv('EPIC_many_shot_verbs.csv')
     class_key_vectors = []
@@ -29,7 +34,7 @@ if __name__ == "__main__":
         words = row['verb'].strip().split('-')
         vector = np.zeros(dimensions, dtype=np.float32)
         for word in words:
-            vector += compute_embedding(model_name, word)
+            vector += compute_embedding(model_name, model, word)
         vector = vector / len(words)
         class_key_vectors.append(vector)
     
@@ -47,7 +52,7 @@ if __name__ == "__main__":
         words = verb.split('-')
         vector = np.zeros(dimensions, dtype=np.float32)
         for word in words:
-            vector += compute_embedding(model_name, word)
+            vector += compute_embedding(model_name, model, word)
         vector = vector / len(words)
         train_vecotrs.append(vector)
     
