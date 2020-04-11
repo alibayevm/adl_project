@@ -5,6 +5,7 @@ from PIL import Image
 import random
 from data_augment import transform_data
 import argparse
+from tqdm import tqdm
 
 repo = 'epic-kitchens/action-models'
 
@@ -102,7 +103,7 @@ if __name__ == "__main__":
     train_embedding = open(os.path.join('..', 'data', 'splits', 'train_embedding.txt'))
     all_features = []
 
-    for i, line in enumerate(train_embedding):
+    for line in tqdm(train_embedding):
         clip_path, total_frames = line.strip().split(' ')[:2]
         inputs = get_frames(clip_path, int(total_frames), modality)
         inputs = inputs.reshape((1, -1, height, width))
