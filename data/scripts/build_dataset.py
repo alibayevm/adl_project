@@ -13,7 +13,7 @@ def save_to_txt(dataset_indices, df, filename):
             video_id = video['video_id']
             narration = '-'.join(video['narration'].strip().split(' '))
             
-            video_path = '{}/{}/{}/{}{}_{}_{}'.format(_dataset_path, participant_id, video_id, '{:s}', video_id, index, narration)
+            video_path = '{}/{}/{}/{}{}_{}_{}'.format(_dataset_path, participant_id, video_id, '{:s}', video_id, video['uid'], narration)
             num_frames = int(video['stop_frame']) - int(video['start_frame'])
             
             file.write('{} {} {} {}\n'.format(video_path, num_frames, verb_class, video['verb']))
