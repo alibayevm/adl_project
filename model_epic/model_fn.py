@@ -1,7 +1,7 @@
 import tensorflow as tf
 import numpy as np 
 import os
-from model_epic.triplet_loss import get_valid_triplets
+from model_epic.triplet_loss import get_avg_triplet_loss
 
 def model_fn(inputs, params, is_training):
     visuals = inputs['visuals']
@@ -22,17 +22,11 @@ def model_fn(inputs, params, is_training):
         logits_text = tf.math.l2_normalize(logits_text, axis=1)
 
 
-    # valid triplet losses
-    loss_vv = get_valid_triplets(labels, logits_visual, logits_visual, params.margin, cross_modal=False)
-    loss_tt = get_valid_triplets(labels, logits_text, logits_text, params.margin, cross_modal=False)
-    loss_vt = get_valid_triplets(labels, logits_visual, logits_text, params.margin, cross_modal=True)
-    loss_tv = get_valid_triplets(labels, logits_text, logits_visual, params.margin, cross_modal=True)
-
     # TODO: Change this to randomly sample `params.triplets` triplets per query without losing gradients
-    loss_vv = tf.reduce_sum(loss_vv)
-    loss_tt = tf.reduce_sum(loss_tt)
-    loss_vt = tf.reduce_sum(loss_vt)
-    loss_tv = tf.reduce_sum(loss_tv)
+    loss_vv = get_avg_triplet_loss(labels, logits_visual, logits_visual, params.margin, cross_modal=False)
+    loss_tt = get_avg_triplet_loss(labels, logits_text, logits_text, params.margin, cross_modal=False)
+    loss_vt = get_avg_triplet_loss(labels, logits_visual, logits_text, params.margin, cross_modal=True)
+    loss_tv = get_avg_triplet_loss(labels, logits_text, logits_visual, params.margin, cross_modal=True)
 
     total_loss = params.lambda_within * (loss_tt + loss_vv) + params.lambda_cross * (loss_vt + loss_tv)
 

@@ -68,10 +68,13 @@ def get_within_modal_mask(labels):
 
 def get_valid_triplets(labels, embeddings_anchor, embeddings, margin, cross_modal, squared=False):
     """
-    Computes and returns a 1D Tensor of losses of all valid triplets. 
+    Computes and returns a 3D Tensor of losses of all valid triplets. 
     Args:
         labels: labels of the batch with shape (batch_size, )
         embeddings_anchor: batch of anchor embeddings
+        embeddings: batch of positive/negative embeddings
+        margin: constant margin
+        cross_modal: whether embeddings are cross modal or not
     """
 
     pairwise_distances = get_pairwise_ditance(embeddings_anchor, embeddings, squared)
@@ -89,5 +92,38 @@ def get_valid_triplets(labels, embeddings_anchor, embeddings, margin, cross_moda
 
     triplet_loss = tf.multiply(mask, triplet_loss)
     triplet_loss = tf.maximum(triplet_loss, 0.0)
+
+    return triplet_loss
+
+
+def get_avg_triplet_loss(labels, embeddings_anchor, embeddings, margin, cross_modal, squared=False):
+    """
+    Computes and returns averaged triplet loss. 
+    Args:
+        labels: labels of the batch with shape (batch_size, )
+        embeddings_anchor: batch of anchor embeddings
+        embeddings: batch of positive/negative embeddings
+        margin: constant margin
+        cross_modal: whether embeddings are cross modal or not
+    """
+    pairwise_distances = get_pairwise_ditance(embeddings_anchor, embeddings, squared)
+
+    positive_dist = tf.expand_dims(pairwise_distances, 2)
+    negative_dist = tf.expand_dims(pairwise_distances, 1)
+
+    triplet_loss = positive_dist - negative_dist + margin
+
+    if cross_modal:
+        mask = get_cross_modal_mask(labels)
+    else:
+        mask = get_within_modal_mask(labels)
+    mask = tf.to_float(mask)
+
+    triplet_loss = tf.multiply(mask, triplet_loss)
+    triplet_loss = tf.maximum(triplet_loss, 0.0)
+
+    valid_triplets = tf.to_float(tf.greater(triplet_loss, 1e-16))
+    num_positive_triplets = tf.reduce_sum(valid_triplets)
+    triplet_loss = tf.reduce_sum(triplet_loss) / (num_positive_triplets + 1e-16)
 
     return triplet_loss
