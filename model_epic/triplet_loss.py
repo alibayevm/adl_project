@@ -9,7 +9,7 @@ def get_pairwise_ditance(embeddings_anchor, embeddings, squared):
     cross_squared = tf.matmul(embeddings, tf.transpose(embeddings))
     cross_squared = tf.diag_part(cross_squared)
 
-    distances = tf.expand_dims(anchor_squared, 1) - 2.0 * dot_product + tf.expand_dims(cross_squared, 1)
+    distances = tf.expand_dims(anchor_squared, 1) - 2.0 * dot_product + tf.expand_dims(cross_squared, 0)
     distances = tf.maximum(distances, 0.0)
 
     if not squared:
@@ -125,5 +125,40 @@ def get_avg_triplet_loss(labels, embeddings_anchor, embeddings, margin, cross_mo
     valid_triplets = tf.to_float(tf.greater(triplet_loss, 1e-16))
     num_positive_triplets = tf.reduce_sum(valid_triplets)
     triplet_loss = tf.reduce_sum(triplet_loss) / (num_positive_triplets + 1e-16)
+
+    return triplet_loss
+
+
+def get_random_triplet_loss(labels, embeddings_anchor, embeddings, margin, num_triplets, cross_modal, squared=False):
+    """
+    Computes and returns averaged triplet loss. 
+    Args:
+        labels: labels of the batch with shape (batch_size, )
+        embeddings_anchor: batch of anchor embeddings
+        embeddings: batch of positive/negative embeddings
+        margin: constant margin
+        cross_modal: whether embeddings are cross modal or not
+    """
+    pairwise_distances = get_pairwise_ditance(embeddings_anchor, embeddings, squared)
+
+    positive_dist = tf.expand_dims(pairwise_distances, 2)
+    negative_dist = tf.expand_dims(pairwise_distances, 1)
+
+    triplet_loss = positive_dist - negative_dist + margin
+
+    if cross_modal:
+        mask = get_cross_modal_mask(labels)
+    else:
+        mask = get_within_modal_mask(labels)
+    mask = tf.to_float(mask)
+
+    triplet_loss = tf.multiply(mask, triplet_loss)
+    triplet_loss = tf.maximum(triplet_loss, 0.0)
+
+    valid_triplets = tf.greater(triplet_loss, 1e-16)
+    triplet_loss = tf.boolean_mask(triplet_loss, valid_triplets)
+    triplet_loss = tf.random_shuffle(triplet_loss)
+    triplet_loss = tf.slice(triplet_loss, [0], [num_triplets])
+    triplet_loss = tf.reduce_sum(triplet_loss)
 
     return triplet_loss
