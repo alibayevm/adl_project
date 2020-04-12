@@ -24,11 +24,12 @@ def input_fn(visuals, words, labels, params, is_training):
     
     # Dimensionality of word vector
     word_dims = int(params.word_embedding[-3:])
+    visual_dims = params.visual_feature_size
 
     # Create reinitializable iterator from dataset
     iterator = dataset.make_initializable_iterator()
     visuals, words, labels = iterator.get_next()
-    visuals.set_shape([None, 2048])
+    visuals.set_shape([None, visual_dims])
     words.set_shape([None, word_dims])
     iterator_init_op = iterator.initializer
 

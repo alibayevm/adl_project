@@ -1,13 +1,13 @@
 import tensorflow as tf
 import numpy as np 
 import os
-from model_epic.triplet_loss import get_avg_triplet_loss
+from model_epic.triplet_loss import get_avg_triplet_loss, get_valid_triplets
 
-def model_fn(inputs, params, is_training):
+def model_fn(inputs, params, mode):
     visuals = inputs['visuals']
     labels = inputs['labels']
     words = inputs['words']
-    reuse = not is_training
+    reuse = mode == 'valid'
 
     # Define the entire model
     with tf.variable_scope('Model', reuse=reuse):
@@ -23,27 +23,57 @@ def model_fn(inputs, params, is_training):
 
 
     # TODO: Change this to randomly sample `params.triplets` triplets per query without losing gradients
+    #"""
     loss_vv = get_avg_triplet_loss(labels, logits_visual, logits_visual, params.margin, cross_modal=False)
     loss_tt = get_avg_triplet_loss(labels, logits_text, logits_text, params.margin, cross_modal=False)
     loss_vt = get_avg_triplet_loss(labels, logits_visual, logits_text, params.margin, cross_modal=True)
     loss_tv = get_avg_triplet_loss(labels, logits_text, logits_visual, params.margin, cross_modal=True)
+    """
+    loss_vv = get_valid_triplets(labels, logits_visual, logits_visual, params.margin, cross_modal=False)
+    loss_tt = get_valid_triplets(labels, logits_text, logits_text, params.margin, cross_modal=False)
+    loss_vt = get_valid_triplets(labels, logits_visual, logits_text, params.margin, cross_modal=True)
+    loss_tv = get_valid_triplets(labels, logits_text, logits_visual, params.margin, cross_modal=True)
+
+    loss_vv = tf.reduce_sum(loss_vv)
+    loss_tt = tf.reduce_sum(loss_tt)
+    loss_vt = tf.reduce_sum(loss_vt)
+    loss_tv = tf.reduce_sum(loss_tv)
+    """
 
     total_loss = params.lambda_within * (loss_tt + loss_vv) + params.lambda_cross * (loss_vt + loss_tv)
 
 
     # Create variable maps for RGB and Flow I3D models
     # Store the top layers into a list
-    if is_training:
+    if mode == 'train':
         optimizer = tf.train.AdamOptimizer(learning_rate=params.learning_rate)
         train_op = optimizer.minimize(total_loss)
-    else:
+    elif mode == 'test':
         variable_map = {}
         for variable in tf.global_variables():
             var_name = variable.name.split('/')
             if var_name[0] == 'Model':
                 variable_map[variable.name.replace(':0', '')] = variable
+        # TODO: implement accuracy metric calculations here
 
-    # TODO: add metrics tensor and ops to update it
+    # -----------------------------------------------------------
+    # METRICS AND SUMMARIES
+    # Metrics for evaluation using tf.metrics (average over whole dataset)
+    with tf.variable_scope("metrics"):
+        metrics = {
+            'total_loss': tf.metrics.mean(total_loss),
+            'loss_vv' : tf.metrics.mean(loss_vv),
+            'loss_tt' : tf.metrics.mean(loss_tt),
+            'loss_vt' : tf.metrics.mean(loss_vt),
+            'loss_tv' : tf.metrics.mean(loss_tv)
+        }
+
+    # Group the update ops for the tf.metrics
+    update_metrics_op = tf.group(*[op for _, op in metrics.values()])
+
+    # Get the op to reset the local variables used in tf.metrics
+    metric_variables = tf.get_collection(tf.GraphKeys.LOCAL_VARIABLES, scope="metrics")
+    metrics_init_op = tf.variables_initializer(metric_variables)
 
     # MODEL SPECIFICATION
     model_spec = inputs
@@ -52,10 +82,13 @@ def model_fn(inputs, params, is_training):
     model_spec['loss_vt'] = loss_vt
     model_spec['loss_tv'] = loss_tv
     model_spec['total_loss'] = total_loss
+    model_spec['metrics_init_op'] = metrics_init_op
+    model_spec['metrics'] = metrics
+    model_spec['update_metrics'] = update_metrics_op
 
-    if is_training:
+    if mode == 'train':
         model_spec['train_op'] = train_op
-    else:
+    elif mode == 'test':
         model_spec['variable_map'] = variable_map
     
     return model_spec
