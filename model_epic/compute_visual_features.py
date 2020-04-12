@@ -81,6 +81,7 @@ def get_frames(clip_path, total_frames, modality, is_training=True, num_segments
 
 parser = argparse.ArgumentParser()
 parser.add_argument('modality', help='Frame modality')
+parser.add_argument('split', help='Name of the dataset split (e.g., train_embedding, train_onehot, etc.)')
 args = parser.parse_args()
 
 
@@ -100,7 +101,7 @@ if __name__ == "__main__":
                             pretrained='epic-kitchens', force_reload=True)
 
     # Training features
-    train_embedding = open(os.path.join('..', 'data', 'splits', 'train_embedding.txt'))
+    train_embedding = open(os.path.join('..', 'data', 'splits', '{}.txt'.format(args.split)))
     all_features = []
 
     for line in tqdm(train_embedding):
@@ -113,7 +114,10 @@ if __name__ == "__main__":
         all_features.append(features)
 
     all_features = np.stack(all_features)
-    np.save(os.path.join('visual_features', 'tsn_resnet50_{}.npy'.format(modality)), all_features, allow_pickle=False, fix_imports=False)
+    save_dir = os.path.join('visual_features', args.split)
+    if not os.path.isdir(save_dir):
+        os.makedirs(save_dir)
+    np.save(os.path.join(save_dir, 'tsn_resnet50_{}.npy'.format(modality)), all_features, allow_pickle=False, fix_imports=False)
 
 
         

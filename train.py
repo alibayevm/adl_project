@@ -33,8 +33,8 @@ if __name__ == "__main__":
     # Input data pipeline
     # TODO: Make it an argument
     if not os.path.isfile(os.path.join('data', 'preprocessed.npz')) or args.preprocess:
-        visual_rgb = os.path.join('model_epic', 'visual_features', 'tsn_resnet50_rgb.npy')
-        visual_flow = os.path.join('model_epic', 'visual_features', 'tsn_resnet50_flow.npy')
+        visual_rgb = os.path.join('model_epic', 'visual_features', 'train_embedding', 'tsn_resnet50_rgb.npy')
+        visual_flow = os.path.join('model_epic', 'visual_features', 'train_embedding', 'tsn_resnet50_flow.npy')
         words = os.path.join('data', 'word_embeddings', '{}_train.npy'.format(params.word_embedding))
         split = os.path.join('data', 'splits', 'train_embedding.txt')
         preprocess(visual_rgb, visual_flow, words, split)
