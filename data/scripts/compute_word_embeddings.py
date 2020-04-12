@@ -13,7 +13,6 @@ args = parser.parse_args()
 def compute_embedding(model_name, model, word):
     if 'wiki' in model_name:
         return model.get_word_vector(word)
-    # FIXME (fixed): Stops at video 480 of training set or computes too slow
     # FIXME: Word `of` is not in dictionary
     elif 'google' in model_name:
         return model[word]
@@ -27,7 +26,7 @@ if __name__ == "__main__":
     elif 'google' in model_name:
         model = gensim.models.KeyedVectors.load_word2vec_format(model_name, binary=True)
 
-    # Class keys
+    # Class keys for test set
     manyshots = pd.read_csv('EPIC_many_shot_verbs.csv')
     class_key_vectors = []
     for _, row in manyshots.iterrows():
@@ -44,7 +43,7 @@ if __name__ == "__main__":
     np.save(os.path.join('..', 'word_embeddings', filename), class_key_vectors, allow_pickle=False, fix_imports=False)
 
     # Training videos
-    train = open(os.path.join('..', 'splits', 'train_embedding.txt'), 'r')
+    train = open(os.path.join('..', 'splits', 'train.txt'), 'r')
     train_vecotrs = []
     
     for line in tqdm(train):
@@ -59,3 +58,20 @@ if __name__ == "__main__":
     train_vecotrs = np.stack(train_vecotrs)
     filename = '{}_train.npy'.format(model_name.split('.')[0])
     np.save(os.path.join('..', 'word_embeddings', filename), train_vecotrs, allow_pickle=False, fix_imports=False)
+
+    # Validation videos
+    valid = open(os.path.join('..', 'splits', 'valid.txt'), 'r')
+    valid_vecotrs = []
+    
+    for line in tqdm(valid):
+        verb = line.strip().split(' ')[-1]
+        words = verb.split('-')
+        vector = np.zeros(dimensions, dtype=np.float32)
+        for word in words:
+            vector += compute_embedding(model_name, model, word)
+        vector = vector / len(words)
+        valid_vecotrs.append(vector)
+    
+    valid_vecotrs = np.stack(valid_vecotrs)
+    filename = '{}_valid.npy'.format(model_name.split('.')[0])
+    np.save(os.path.join('..', 'word_embeddings', filename), valid_vecotrs, allow_pickle=False, fix_imports=False)
