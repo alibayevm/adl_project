@@ -1,7 +1,9 @@
 import tensorflow as tf
 import numpy as np 
 import os
-from model_epic.triplet_loss import get_avg_triplet_loss, get_valid_triplets
+from model_epic.triplet_loss import get_avg_triplet_loss, get_valid_triplets, get_random_triplet_loss
+from model_epic.accuracy import compute_predictions
+
 
 def model_fn(inputs, params, mode):
     visuals = inputs['visuals']
@@ -23,11 +25,13 @@ def model_fn(inputs, params, mode):
 
 
     # TODO: Change this to randomly sample `params.triplets` triplets per query without losing gradients
-    #"""
+    """
     loss_vv = get_avg_triplet_loss(labels, logits_visual, logits_visual, params.margin, cross_modal=False)
     loss_tt = get_avg_triplet_loss(labels, logits_text, logits_text, params.margin, cross_modal=False)
     loss_vt = get_avg_triplet_loss(labels, logits_visual, logits_text, params.margin, cross_modal=True)
     loss_tv = get_avg_triplet_loss(labels, logits_text, logits_visual, params.margin, cross_modal=True)
+    """
+    
     """
     loss_vv = get_valid_triplets(labels, logits_visual, logits_visual, params.margin, cross_modal=False)
     loss_tt = get_valid_triplets(labels, logits_text, logits_text, params.margin, cross_modal=False)
@@ -39,6 +43,13 @@ def model_fn(inputs, params, mode):
     loss_vt = tf.reduce_sum(loss_vt)
     loss_tv = tf.reduce_sum(loss_tv)
     """
+
+    #"""
+    loss_vv = get_random_triplet_loss(labels, logits_visual, logits_visual, params.margin, params.num_triplets, cross_modal=False)
+    loss_tt = get_random_triplet_loss(labels, logits_text, logits_text, params.margin, params.num_triplets, cross_modal=False)
+    loss_vt = get_random_triplet_loss(labels, logits_visual, logits_text, params.margin, params.num_triplets, cross_modal=True)
+    loss_tv = get_random_triplet_loss(labels, logits_text, logits_visual, params.margin, params.num_triplets, cross_modal=True)
+    #"""
 
     total_loss = params.lambda_within * (loss_tt + loss_vv) + params.lambda_cross * (loss_vt + loss_tv)
 
@@ -55,18 +66,24 @@ def model_fn(inputs, params, mode):
             if var_name[0] == 'Model':
                 variable_map[variable.name.replace(':0', '')] = variable
         # TODO: implement accuracy metric calculations here
+        predictions = compute_predictions(logits_visual, logits_text, labels)
 
     # -----------------------------------------------------------
     # METRICS AND SUMMARIES
     # Metrics for evaluation using tf.metrics (average over whole dataset)
     with tf.variable_scope("metrics"):
-        metrics = {
-            'total_loss': tf.metrics.mean(total_loss),
-            'loss_vv' : tf.metrics.mean(loss_vv),
-            'loss_tt' : tf.metrics.mean(loss_tt),
-            'loss_vt' : tf.metrics.mean(loss_vt),
-            'loss_tv' : tf.metrics.mean(loss_tv)
-        }
+        if mode == 'test':
+            metrics = {
+                'accuracy': tf.metrics.accuracy(labels, predictions)
+            }
+        else:
+            metrics = {
+                'total_loss': tf.metrics.mean(total_loss),
+                'loss_vv' : tf.metrics.mean(loss_vv),
+                'loss_tt' : tf.metrics.mean(loss_tt),
+                'loss_vt' : tf.metrics.mean(loss_vt),
+                'loss_tv' : tf.metrics.mean(loss_tv)
+            }
 
     # Group the update ops for the tf.metrics
     update_metrics_op = tf.group(*[op for _, op in metrics.values()])
