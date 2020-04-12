@@ -2,6 +2,34 @@ import tensorflow as tf
 import numpy as np 
 from tqdm import trange
 
+def input_fn_test(visuals, labels, words_classkeys, params):
+    dataset = (tf.data.Dataset.from_tensor_slices((visuals, labels))
+        .batch(1)
+        .prefetch(params.prefetch_test)
+    )
+    num_steps = len(labels)
+    word_dims = int(params.word_embedding[-3:])
+    visual_dims = params.visual_feature_size
+    
+    words_classkeys = tf.constant(words_classkeys, dtype=tf.float32)
+    words_classkeys.set_shape([None, word_dims])
+
+    iterator = dataset.make_initializable_iterator()
+    visuals, labels = iterator.get_next()
+    visuals.set_shape([None, visual_dims])
+    iterator_init_op = iterator.initializer
+
+    inputs = {
+        'visuals': visuals, 
+        'words': words_classkeys,
+        'labels': labels,
+        'iterator_init_op': iterator_init_op, 
+        'num_steps' : num_steps
+    }
+
+    return inputs
+
+
 def input_fn(visuals, words, labels, params, is_training):
     """
     Takes the dataset information and returns processed dataset
