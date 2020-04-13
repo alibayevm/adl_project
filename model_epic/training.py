@@ -94,30 +94,35 @@ def train_and_validate_model(train_model_spec, valid_model_spec, model_dir, para
             plt.plot(range(1, epoch + 2), stats_train['vv'], 'r', label='Train loss')
             plt.plot(range(1, epoch + 2), stats_valid['vv'], 'b', label='Valid loss')
             plt.title('Video to video loss')
+            plt.legend()
             plt.savefig(os.path.join(model_dir, 'vv.png'))
 
             plt.clf()
             plt.plot(range(1, epoch + 2), stats_train['tt'], 'r', label='Train loss')
             plt.plot(range(1, epoch + 2), stats_valid['tt'], 'b', label='Valid loss')
             plt.title('Text to text loss')
+            plt.legend()
             plt.savefig(os.path.join(model_dir, 'tt.png'))
 
             plt.clf()
             plt.plot(range(1, epoch + 2), stats_train['vt'], 'r', label='Train loss')
             plt.plot(range(1, epoch + 2), stats_valid['vt'], 'b', label='Valid loss')
             plt.title('Video to text loss')
+            plt.legend()
             plt.savefig(os.path.join(model_dir, 'vt.png'))
 
             plt.clf()
             plt.plot(range(1, epoch + 2), stats_train['tv'], 'r', label='Train loss')
             plt.plot(range(1, epoch + 2), stats_valid['tv'], 'b', label='Valid loss')
             plt.title('Text to video loss')
+            plt.legend()
             plt.savefig(os.path.join(model_dir, 'tv.png'))
 
             plt.clf()
             plt.plot(range(1, epoch + 2), stats_train['total'], 'r', label='Train loss')
             plt.plot(range(1, epoch + 2), stats_valid['total'], 'b', label='Valid loss')
             plt.title('Total loss')
+            plt.legend()
             plt.savefig(os.path.join(model_dir, 'total.png'))
 
         # Save the loss values
