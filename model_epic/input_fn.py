@@ -45,10 +45,10 @@ def input_fn(visuals, words, labels, params, is_training):
     else:
         dataset = (tf.data.Dataset.from_tensor_slices((visuals, words, labels))
             .repeat()
-            .batch(1)
+            .batch(params.batch_size)
             .prefetch(params.prefetch_test)
         )
-        num_steps = len(labels)
+        num_steps = (len(labels) - 1) // params.batch_size + 1
     
     # Dimensionality of word vector
     word_dims = int(params.word_embedding[-3:])
