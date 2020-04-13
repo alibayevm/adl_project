@@ -49,14 +49,14 @@ if __name__ == "__main__":
     test_model_spec = model_fn(test_inputs, params, 'test')
 
     # Initialize saver
-    saver = tf.train.Saver(var_list=test_model_spec, reshape=True)
+    saver = tf.train.Saver()
     
     # Start testing
     with tf.Session() as sess:
         sess.run(tf.global_variables_initializer())
         
         # Restore weights
-        save_path = os.path.join(model_dir, 'best_weights')
+        save_path = tf.train.latest_checkpoint(os.path.join(model_dir, 'last_weights'))
         saver.restore(sess, save_path)
 
         update_metrics = test_model_spec['update_metrics']
