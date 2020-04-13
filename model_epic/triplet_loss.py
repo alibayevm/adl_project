@@ -162,3 +162,46 @@ def get_random_triplet_loss(labels, embeddings_anchor, embeddings, margin, num_t
     triplet_loss = tf.reduce_sum(triplet_loss)
 
     return triplet_loss
+
+
+def get_positive_mask(labels, cross_modal):
+    labels_equal = tf.equal(tf.expand_dims(labels, 0), tf.expand_dims(labels, 1))
+
+    if not cross_modal:
+        indices_equal = tf.cast(tf.eye(tf.shape(labels)[0]), tf.bool)
+        indices_not_equal = tf.logical_not(indices_equal)
+
+        return tf.logical_and(indices_not_equal, labels_equal)
+
+    return labels_equal
+
+
+def get_negative_mask(labels):
+    labels_equal = tf.equal(tf.expand_dims(labels, 0), tf.expand_dims(labels, 1))
+
+    mask = tf.logical_not(labels_equal)
+
+    return mask
+
+
+def batch_hard_triplet_loss(labels, embeddings_anchor, embeddings, margin, cross_modal, squared=False):
+    pairwise_distances = get_pairwise_ditance(embeddings_anchor, embeddings, squared)
+    
+    mask_positive = get_positive_mask(labels, cross_modal)
+    mask_positive = tf.to_float(mask_positive)
+
+    positive_dist = tf.multiply(mask_positive, pairwise_distances)
+
+    hardest_positives = tf.reduce_max(positive_dist, axis=1, keepdims=True)
+
+    mask_negative = get_negative_mask(labels)
+    mask_negative = tf.to_float(mask_negative)
+
+    max_dist = tf.reduce_max(pairwise_distances, axis=1, keepdims=True)
+    negative_dist = pairwise_distances + max_dist * (1.0 - mask_negative)
+
+    hardest_negatives = tf.reduce_min(negative_dist, axis=1, keepdims=True)
+
+    triplet_loss = tf.maximum(hardest_positives - hardest_negatives + margin, 0.0)
+
+    return tf.reduce_mean(triplet_loss)
