@@ -6,3 +6,5 @@ best_weights
 *.bin
 w2v*.pkl
 visual_features/
+preprocessed*.npz
+*.sh
