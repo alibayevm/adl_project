@@ -45,6 +45,7 @@ def input_fn(visuals, words, labels, params, is_training):
     else:
         dataset = (tf.data.Dataset.from_tensor_slices((visuals, words, labels))
             .repeat()
+            .shuffle(len(labels))
             .batch(params.batch_size)
             .prefetch(params.prefetch_test)
         )
