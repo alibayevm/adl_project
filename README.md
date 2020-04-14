@@ -15,8 +15,12 @@ The repository has the following directories and subdirectories:
 * test.py - evaluates the selected model.
 
 ## Task list
-- [x] - Build dataset from many shot verbs. Use 60-20-20 split. Need to figure out if we need a validation set or not. Technically, we need it for one-hot classifier, but not for the model based on embedding. We could have 80/20 split for train/test, then split train into 60/20 train/valid splits when training one-hot representation.
+- [x] - Build dataset from many shot verbs. Use 60-20-20 split.
 - [ ] - Get different word embeddings for the verb classes.
+    - [x] - 100-dim Word2Vec pretrained on Wikipedia
+    - [ ] - 300-dim Word2Vec pretrained on Wikipedia
+    - [ ] - 100-dim Word2Vec pretrained on Google News
+    - [ ] - GloVe models
 - [x] - Get word embeddings for each verb in each video.
 - [x] - Come up with the list of hyper parameters for **params.json** files.
 - [ ] - Come up with the list of experiments.
@@ -28,8 +32,8 @@ The repository has the following directories and subdirectories:
 - [ ] - Evaluate the models.
 - [ ] - Train the baseline models with one-hot encoding.
 - [ ] - Compare the embedding strategy with one-hot encoding strategy.
-- [ ] - Think about which metrics to use, can use Precision and Recall along with Accuracy. Dataset is unbalanced, so 1-h method will favor 4/26 huge classes.
-- [x] - Will probably have to precompute the extracted RGB and Flow features from Deep networks due to memory limitations. 
+- [ ] - Think about which metrics to use, can use Precision and Recall along with Accuracy.
+- [x] - Precompute the extracted RGB and Flow features from Temporal Segment Networks. 
 
 ## How to run training
 Copy __visual_features__ directory from Google Drive into __model_epic__ directory. Then run:
