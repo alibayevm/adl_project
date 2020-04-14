@@ -22,7 +22,7 @@ The repository has the following directories and subdirectories:
 - [ ] - Come up with the list of experiments.
 - [x] - Process videos into TensorFlow dataset object.
 - [x] - Build the model.
-- [ ] - Build the evaluation procedure.
+- [x] - Build the evaluation procedure.
 - [x] - Build the training procedure.
 - [ ] - Train the models.
 - [ ] - Evaluate the models.
@@ -37,3 +37,18 @@ Copy __visual_features__ directory from Google Drive into __model_epic__ directo
 python train.py path_to_experiment_dir
 python test.py path_to_experiment_dir
 ```
+
+## Parameters
+* __batch_size__ - Batch size, authors use 256
+* __visual_feature_size__ - Size of the visual feature vectors extracted via CNN
+* __lambda_within__ and __lambda_cross__ - Weights of the within modal and cross modal triplet losses, authors use 0.1 and 1.0 respectively
+* __learning_rate__ - Learning rate, authros use 1e-5
+* __margin__ - The marginal constant in the triplet loss, authors didn't mention the value they used
+* __num_epochs__ - Number of epochs. Decided to switch from step based to epoch based metrics reading during training
+* __num_triplets__ - Number of randomly selected triplets per query during training, authors use 100. __Note:__ we couldn't implement it as tensorflow can't compute gradients for random operations.
+* __triplet_sampling__ - Sampling strategy for the triplet losses. Currently, 3 methods were implemented: 
+    * __hard__ - Triplets with highest positive sample distances and lowest negative sample distances
+    * __total__ - Some up all triplet losses
+    * __avg__ - Average of all _valid_ triplet losses
+* __fc1__ and __fc2__ - Dimensionality of fully connected layers. Size of FC2 defines the dimensionality of the embedding vectors.
+* __word_embedding__ - Method for embedding words. Currently use 100-dimensional Word2Vec trained on Wikipedia
