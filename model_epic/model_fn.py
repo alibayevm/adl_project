@@ -26,24 +26,26 @@ def model_fn(inputs, params, mode):
 
 
     # TODO: Change this to randomly sample `params.triplets` triplets per query without losing gradients
-    """
-    loss_vv = get_avg_triplet_loss(labels, logits_visual, logits_visual, params.margin, cross_modal=False)
-    loss_tt = get_avg_triplet_loss(labels, logits_text, logits_text, params.margin, cross_modal=False)
-    loss_vt = get_avg_triplet_loss(labels, logits_visual, logits_text, params.margin, cross_modal=True)
-    loss_tv = get_avg_triplet_loss(labels, logits_text, logits_visual, params.margin, cross_modal=True)
-    """
-    
-    """
-    loss_vv = get_valid_triplets(labels, logits_visual, logits_visual, params.margin, cross_modal=False)
-    loss_tt = get_valid_triplets(labels, logits_text, logits_text, params.margin, cross_modal=False)
-    loss_vt = get_valid_triplets(labels, logits_visual, logits_text, params.margin, cross_modal=True)
-    loss_tv = get_valid_triplets(labels, logits_text, logits_visual, params.margin, cross_modal=True)
+    if params.triplet_sampling == 'hard':
+        loss_vv = batch_hard_triplet_loss(labels, logits_visual, logits_visual, params.margin, cross_modal=False)
+        loss_tt = batch_hard_triplet_loss(labels, logits_text, logits_text, params.margin, cross_modal=False)
+        loss_vt = batch_hard_triplet_loss(labels, logits_visual, logits_text, params.margin, cross_modal=True)
+        loss_tv = batch_hard_triplet_loss(labels, logits_text, logits_visual, params.margin, cross_modal=True)
+    elif params.triplet_sampling == 'total':
+        loss_vv = get_valid_triplets(labels, logits_visual, logits_visual, params.margin, cross_modal=False)
+        loss_tt = get_valid_triplets(labels, logits_text, logits_text, params.margin, cross_modal=False)
+        loss_vt = get_valid_triplets(labels, logits_visual, logits_text, params.margin, cross_modal=True)
+        loss_tv = get_valid_triplets(labels, logits_text, logits_visual, params.margin, cross_modal=True)
 
-    loss_vv = tf.reduce_sum(loss_vv)
-    loss_tt = tf.reduce_sum(loss_tt)
-    loss_vt = tf.reduce_sum(loss_vt)
-    loss_tv = tf.reduce_sum(loss_tv)
-    """
+        loss_vv = tf.reduce_sum(loss_vv)
+        loss_tt = tf.reduce_sum(loss_tt)
+        loss_vt = tf.reduce_sum(loss_vt)
+        loss_tv = tf.reduce_sum(loss_tv)
+    else:
+        loss_vv = get_avg_triplet_loss(labels, logits_visual, logits_visual, params.margin, cross_modal=False)
+        loss_tt = get_avg_triplet_loss(labels, logits_text, logits_text, params.margin, cross_modal=False)
+        loss_vt = get_avg_triplet_loss(labels, logits_visual, logits_text, params.margin, cross_modal=True)
+        loss_tv = get_avg_triplet_loss(labels, logits_text, logits_visual, params.margin, cross_modal=True)
 
     """
     loss_vv = get_random_triplet_loss(labels, logits_visual, logits_visual, params.margin, params.num_triplets, cross_modal=False)
@@ -51,11 +53,6 @@ def model_fn(inputs, params, mode):
     loss_vt = get_random_triplet_loss(labels, logits_visual, logits_text, params.margin, params.num_triplets, cross_modal=True)
     loss_tv = get_random_triplet_loss(labels, logits_text, logits_visual, params.margin, params.num_triplets, cross_modal=True)
     """
-
-    loss_vv = batch_hard_triplet_loss(labels, logits_visual, logits_visual, params.margin, cross_modal=False)
-    loss_tt = batch_hard_triplet_loss(labels, logits_text, logits_text, params.margin, cross_modal=False)
-    loss_vt = batch_hard_triplet_loss(labels, logits_visual, logits_text, params.margin, cross_modal=True)
-    loss_tv = batch_hard_triplet_loss(labels, logits_text, logits_visual, params.margin, cross_modal=True)
 
     total_loss = params.lambda_within * (loss_tt + loss_vv) + params.lambda_cross * (loss_vt + loss_tv)
 

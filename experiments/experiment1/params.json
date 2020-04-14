@@ -1,6 +1,5 @@
 {    
     "batch_size" : 256,
-    "num_classes" : 26,
 
     "visual_feature_size" : 2048,
     
@@ -9,9 +8,9 @@
 
     "learning_rate" : 1e-5,
     "margin" : 0.5,
-    "num_total_steps" : 4000,
     "num_epochs" : 50,
     "num_triplets" : 100,
+    "triplet_sampling" : "hard",
 
     "fc1" : 256,
     "fc2" : 256,
