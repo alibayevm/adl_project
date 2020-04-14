@@ -56,19 +56,10 @@ def model_fn(inputs, params, mode):
 
     total_loss = params.lambda_within * (loss_tt + loss_vv) + params.lambda_cross * (loss_vt + loss_tv)
 
-
-    # Create variable maps for RGB and Flow I3D models
-    # Store the top layers into a list
     if mode == 'train':
         optimizer = tf.train.AdamOptimizer(learning_rate=params.learning_rate)
         train_op = optimizer.minimize(total_loss)
     elif mode == 'test':
-        variable_map = {}
-        for variable in tf.global_variables():
-            var_name = variable.name.split('/')
-            if var_name[0] == 'Model':
-                variable_map[variable.name.replace(':0', '')] = variable
-        # TODO: implement accuracy metric calculations here
         predictions = compute_predictions(logits_visual, logits_text, labels)
 
     # -----------------------------------------------------------
@@ -108,8 +99,79 @@ def model_fn(inputs, params, mode):
 
     if mode == 'train':
         model_spec['train_op'] = train_op
-    elif mode == 'test':
-        model_spec['variable_map'] = variable_map
     
     return model_spec
 
+
+def model_onehot(inputs, params, mode, num_classes=26):
+    labels = inputs['labels']
+    reuse = mode == 'valid'
+
+    # Define the entire model
+    if mode == 'test':
+        with tf.variable_scope('Model_rgb'):
+            logits_rgb = tf.layers.dense(inputs['rgb'], num_classes, use_bias=False, name='visual1')
+            logits_rgb = tf.nn.softmax(logits_rgb)
+        with tf.variable_scope('Model_flow'):
+            logits_flow = tf.layers.dense(inputs['flow'], num_classes, use_bias=False, name='visual1')
+            logits_flow = tf.nn.softmax(logits_flow)
+        
+        logits = logits_rgb + logits_flow
+
+    else:
+        with tf.variable_scope('Model_{}'.format(params.modality), reuse=reuse):
+            logits = tf.layers.dense(inputs[params.modality], num_classes, use_bias=False, name='visual1')
+    
+    predictions = tf.argmax(logits, axis=1)
+    loss = tf.losses.sparse_softmax_cross_entropy(labels, logits)
+
+    if mode == 'train':
+        optimizer = tf.train.AdamOptimizer(params.learning_rate)
+        train_op = optimizer.minimize(loss)
+
+    if mode == 'test':
+        with tf.variable_scope("metrics"):
+            metrics = {
+                'accuracy_rgb': tf.metrics.accuracy(labels, predictions=tf.argmax(logits_rgb, axis=1)),
+                'accuracy_flow': tf.metrics.accuracy(labels, predictions=tf.argmax(logits_flow, axis=1)),
+                'accuracy_joint': tf.metrics.accuracy(labels, predictions),
+                'loss': tf.metrics.mean(loss)
+            }
+    else:
+        with tf.variable_scope("metrics"):
+            metrics = {
+                'accuracy': tf.metrics.accuracy(labels, predictions),
+                'loss': tf.metrics.mean(loss)
+            }
+    
+    # Group the update ops for the tf.metrics
+    update_metrics_op = tf.group(*[op for _, op in metrics.values()])
+
+    # Get the op to reset the local variables used in tf.metrics
+    metric_variables = tf.get_collection(tf.GraphKeys.LOCAL_VARIABLES, scope="metrics")
+    metrics_init_op = tf.variables_initializer(metric_variables)
+
+    variable_map_rgb = {}
+    variable_map_flow = {}
+    for variable in tf.global_variables():
+        var_name = variable.name.split('/')
+        if var_name[0] == 'Model_rgb':
+            variable_map_rgb[variable.name.replace(':0', '')] = variable
+        if var_name[0] == 'Model_flow':
+            variable_map_flow[variable.name.replace(':0', '')] = variable
+        
+
+    # MODEL SPECIFICATION
+    model_spec = inputs
+    model_spec['loss'] = loss
+    model_spec['metrics_init_op'] = metrics_init_op
+    model_spec['metrics'] = metrics
+    model_spec['update_metrics'] = update_metrics_op
+
+    model_spec['variable_map_rgb'] = variable_map_rgb
+    model_spec['variable_map_flow'] = variable_map_flow
+
+    if mode == 'train':
+        model_spec['train_op'] = train_op
+    
+    return model_spec
