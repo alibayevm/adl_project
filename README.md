@@ -42,6 +42,12 @@ python train.py path_to_experiment_dir
 python test.py path_to_experiment_dir
 ```
 
+To train and test verb classification with one-hot encoding, run:
+```
+python train.py -o -p path_to_experiment_dir/[rgb|flow]
+python test.py -o -p path_to_experiment_dir
+```
+
 ## Parameters
 * __batch_size__ - Batch size, authors use 256
 * __visual_feature_size__ - Size of the visual feature vectors extracted via CNN
