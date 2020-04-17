@@ -1,6 +1,8 @@
 import tensorflow as tf
 import numpy as np 
 from tqdm import trange
+import matplotlib.pyplot as plt
+import os
 
 def input_fn_test(visuals, labels, words_classkeys, params):
     dataset = (tf.data.Dataset.from_tensor_slices((visuals, labels))
@@ -32,10 +34,40 @@ def input_fn_test(visuals, labels, words_classkeys, params):
     return inputs
 
 
+def upsample(array, labels, coefs):
+    balanced = []
+    for i, row in enumerate(array):
+        for _ in range(coefs[labels[i]]):
+            balanced.append(row)
+    return balanced
+
+
+def data_balancing(visuals, words, labels):
+    class_stats = [0 for _ in range(26)]
+    for label in labels:
+        class_stats[label] += 1
+    
+    coefs = [max(class_stats) // c for c in class_stats]
+    
+    return upsample(visuals, labels, coefs), upsample(words, labels, coefs), upsample(labels, labels, coefs)
+
+
 def input_fn(visuals, words, labels, params, is_training):
     """
     Takes the dataset information and returns processed dataset
     """
+    if params.balance and is_training:
+        visuals, words, labels = data_balancing(visuals, words, labels)
+        
+        # Save the balanced distribution
+        c_list = [0 for _ in range(26)]
+        for c in labels:
+            c_list[c] += 1
+        c_list = [c / len(labels) * 100 for c in c_list]
+
+        plt.bar(range(26), c_list)
+        plt.savefig(os.path.join('data', 'splits', 'train_balanced.png'))
+
     if is_training:
         dataset = (tf.data.Dataset.from_tensor_slices((visuals, words, labels))
             .shuffle(len(labels))
@@ -46,8 +78,8 @@ def input_fn(visuals, words, labels, params, is_training):
         num_steps = (len(labels) - 1) // params.batch_size + 1
     else:
         dataset = (tf.data.Dataset.from_tensor_slices((visuals, words, labels))
-            .repeat()
             .shuffle(len(labels))
+            .repeat()
             .batch(params.batch_size)
             .prefetch(params.prefetch_test)
         )
