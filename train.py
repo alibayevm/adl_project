@@ -21,6 +21,7 @@ args = parser.parse_args()
 
 if __name__ == "__main__":
     tf.set_random_seed(230)
+    os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
     model_dir = args.model_dir
 
