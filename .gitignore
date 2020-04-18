@@ -8,3 +8,4 @@ w2v*.pkl
 visual_features/
 preprocessed*.npz
 *.sh
+combination_*/
