@@ -60,5 +60,6 @@ for batch_size in batch_sizes:
                             outfile.write(json_object)
                         
                         counter += 1
+
                         run_file.write('python train.py {}/\n'.format(dir_path))
                         run_file.write('python test.py {}/\n\n'.format(dir_path))
