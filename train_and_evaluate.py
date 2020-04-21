@@ -14,6 +14,7 @@ learning_rate = 1e-5
 dropout_val = 0.6
 num_epochs = 300
 embedding = True
+random = True
 
 
 # Embedding model
@@ -39,10 +40,16 @@ def model_fn_emb(model, is_training):
         logits_text = tf.math.l2_normalize(logits_text, axis=1)
         
     if is_training:
-        vv = get_avg_triplet_loss(labels, logits_visual, logits_visual, margin, cross_modal=False)
-        tt = get_avg_triplet_loss(labels, logits_text, logits_text, margin, cross_modal=False)
-        vt = get_avg_triplet_loss(labels, logits_visual, logits_text, margin, cross_modal=True)
-        tv = get_avg_triplet_loss(labels, logits_text, logits_visual, margin, cross_modal=True)
+        if random:
+            vv = get_random_triplet_loss(labels, logits_visual, logits_visual, margin, 100, cross_modal=False)
+            tt = get_random_triplet_loss(labels, logits_text, logits_text, margin, 100, cross_modal=False)
+            vt = get_random_triplet_loss(labels, logits_visual, logits_text, margin, 100, cross_modal=True)
+            tv = get_random_triplet_loss(labels, logits_text, logits_visual, margin, 100, cross_modal=True)
+        else:
+            vv = get_avg_triplet_loss(labels, logits_visual, logits_visual, margin, cross_modal=False)
+            tt = get_avg_triplet_loss(labels, logits_text, logits_text, margin, cross_modal=False)
+            vt = get_avg_triplet_loss(labels, logits_visual, logits_text, margin, cross_modal=True)
+            tv = get_avg_triplet_loss(labels, logits_text, logits_visual, margin, cross_modal=True)
     
         total = 0.1 * (vv + tt) + 1.0 * (vt + tv)
 
@@ -314,3 +321,20 @@ if __name__ == "__main__":
         
         
         # NOTE: can calculate Precision/Recall/F1 from best_conf_mat numpy array
+        precisions = [None for _ in range(26)]
+        recalls = [None for _ in range(26)]
+
+        print('\n\n{:^20}{:^20}{:^20}\n'.format('Class', 'Precision', 'Recall'))
+        for i in range(26):
+            precisions[i] = best_conf_mat[i][i] / sum(np.transpose(best_conf_mat)[i])
+            recalls[i] = best_conf_mat[i][i] / sum(best_conf_mat[i])
+            print('{:^20}{:^20}{:^20}'.format(i, precisions[i], recalls[i]))
+        print()
+        precisions = np.stack(precisions)
+        recalls = np.stack(recalls)
+
+        extension = 'embed' if embedding else 'onehot'
+
+        # Save data
+        np.savez('metrics_{}.npz'.format(extension), conf_matrix=best_conf_mat, precisions=precisions, recalls=recalls)
+        
