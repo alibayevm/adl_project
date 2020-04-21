@@ -159,6 +159,7 @@ def get_random_triplet_loss(labels, embeddings_anchor, embeddings, margin, num_t
     triplet_loss = tf.boolean_mask(triplet_loss, valid_triplets)
     # triplet_loss = tf.random_shuffle(triplet_loss)
     triplet_loss = tf.sort(triplet_loss, direction='DESCENDING')
+    triplet_loss = tf.concat(concat_dim=0, values=[triplet_loss, tf.zeros(num_triplets)])
     triplet_loss = tf.slice(triplet_loss, [0], [num_triplets])
     triplet_loss = tf.reduce_sum(triplet_loss)
 
