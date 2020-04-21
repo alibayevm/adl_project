@@ -82,38 +82,27 @@ def get_frames_and_labels(data, num_frames, sampling_rate, modality, word_embedd
     frames = frames / 255 * 2 - 1
     frames = np.array(frames, dtype='float32')
 
-    # HACK: will not look for word vector for RGB frames, will be done for Flow frames anyway
-    if modality != 'rgb':
-        # Get word embedding
-        if is_training:
-            words = np.load(os.path.join('data', 'word_embeddings', word_embedding + '_train.npy'))
-            word = words[sample_index]
-        else:
-            words = np.load(os.path.join('data', 'word_embeddings', word_embedding + '_classkeys.npy'))
-            word = words[label]
+    # Get word embedding
+    if is_training:
+        words = np.load(os.path.join('data', 'word_embeddings', 'train.npy'))
+        word = words[sample_index]
     else:
         word = np.zeros(int(word_embedding[-3:]))
         
-    return frames, label, word.astype(np.float32)
+    return frames, word.astype(np.float32), label
 
 
 def parse_fn(data, params, is_training):
     """
     A wrapper function to call `get_frames_and_labels` function
     """
-    [frames_rgb, label, word_embedding] = tf.py_func(
+    [frames, word, label] = tf.py_func(
         get_frames_and_labels,
         [data, params.num_frames, params.sampling_rate, "rgb", params.word_embedding, is_training],
-        [tf.float32, tf.int64, tf.float32]
+        [tf.float32, tf.float32, tf.int64]
     )
 
-    [frames_flow, label, word_embedding] = tf.py_func(
-        get_frames_and_labels,
-        [data, params.num_frames, params.sampling_rate, "flow", params.word_embedding, is_training],
-        [tf.float32, tf.int64, tf.float32]
-    )
-
-    return frames_rgb, frames_flow, label, word_embedding
+    return frames, word, label
 
 
 def input_fn(data_list, params, is_training):
@@ -131,7 +120,7 @@ def input_fn(data_list, params, is_training):
             .map(parse_train, num_parallel_calls=params.num_parallel_calls)
             .repeat()
             .batch(params.batch_size)
-            .prefetch(params.prefetch_train)
+            .prefetch(1)
         )
         num_steps = (len(data_list) - 1) // params.batch_size + 1
     else:
@@ -139,24 +128,23 @@ def input_fn(data_list, params, is_training):
             .map(parse_test, num_parallel_calls=params.num_parallel_calls)
             .repeat()
             .batch(1)
-            .prefetch(params.prefetch_test)
+            .prefetch(1)
         )
         num_steps = len(data_list)
     
-    # Dimensionality of word vector
-    word_dims = int(params.word_embedding[-3:])
-
     # Create reinitializable iterator from dataset
     iterator = dataset.make_initializable_iterator()
-    clips_rgb, clips_flow, labels, words = iterator.get_next()
-    clips_rgb.set_shape([None, None, params.frame_size, params.frame_size, 3])
-    clips_flow.set_shape([None, None, params.frame_size, params.frame_size, 2])
-    words.set_shape([None, word_dims])
+    clips, words, labels = iterator.get_next()
+
+    if not is_training:
+        words = np.load(os.path.join('data', 'word_embeddings', 'class_keys.npy'))
+    
+    clips.set_shape([None, None, 224, 224, 3])
+    words.set_shape([None, 100])
     iterator_init_op = iterator.initializer
 
     inputs = {
-        'clips_rgb': clips_rgb, 
-        'clips_flow': clips_flow, 
+        'clips': clips, 
         'labels': labels, 
         'words': words, 
         'iterator_init_op': iterator_init_op, 
