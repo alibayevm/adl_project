@@ -58,19 +58,20 @@ def model_fn(inputs, params, is_training):
             if var_name[3] in top_variables or var_name[1] in top_variables:
                 train_vars.append(variable)
 
-        optimizer = tf.train.AdamOptimizer(learning_rate=params.learning_rate)
+        learning_rate = tf.placeholder(tf.float32)
+        optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
 
         with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
             train_op_initial = optimizer.minimize(total_loss, var_list=train_vars)
             train_op = optimizer.minimize(total_loss)
-        with tf.variable_scope("metrics"):
+        with tf.variable_scope("metrics_train"):
             metrics = {
                 'loss': tf.metrics.mean(total_loss)
             }
     else:
         predictions = compute_predictions(logits_visual, logits_text, labels)
         conf_mat = tf.confusion_matrix(labels, predictions, num_classes=26)
-        with tf.variable_scope("metrics"):
+        with tf.variable_scope("metrics_valid"):
             metrics = {
                 'accuracy': tf.metrics.accuracy(labels=labels, predictions=predictions),
             }
@@ -79,8 +80,9 @@ def model_fn(inputs, params, is_training):
     update_metrics_op = tf.group(*[op for _, op in metrics.values()])
 
     # Get the op to reset the local variables used in tf.metrics
-    metric_variables = tf.get_collection(tf.GraphKeys.LOCAL_VARIABLES, scope="metrics")
-    metrics_init_op = tf.variables_initializer(metric_variables) 
+    postfix = 'train' if is_training else 'valid'
+    metric_variables = tf.get_collection(tf.GraphKeys.LOCAL_VARIABLES, scope="metrics_{}".format(postfix))
+    metrics_init_op = tf.variables_initializer(metric_variables)
 
     # MODEL SPECIFICATION
     model_spec = inputs
@@ -97,6 +99,7 @@ def model_fn(inputs, params, is_training):
         model_spec['train_op_initial'] = train_op_initial
         model_spec['train_op'] = train_op
         model_spec['variable_map'] = variable_map 
+        model_spec['lr'] = learning_rate
     else:
         model_spec['conf_mat'] = conf_mat
     
