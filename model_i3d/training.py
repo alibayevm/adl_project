@@ -91,4 +91,4 @@ def train_model(train_model, valid_model, model_dir, params):
 
                 save_dict_to_json({'accuracy': accuracy, 'loss': loss}, os.path.join(model_dir, 'best_metrics.json'))
         
-            np.savez('conf_mat.npz', conf_mat_acc=conf_mat_acc, conf_mat_loss=conf_mat_loss, conf_mat_best=conf_mat_best)
+            np.savez(os.path.join(model_dir, 'conf_mat.npz'), conf_mat_acc=conf_mat_acc, conf_mat_loss=conf_mat_loss, conf_mat_best=conf_mat_best)
