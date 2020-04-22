@@ -11,7 +11,7 @@ def load_image(clip_path, index, modality):
     RGB frame is returned as a list of a single element.
     Flow frames are returned as a list with 2 elements.
     """
-    filename = 'frame{:010d}.jpg'.format(index)
+    filename = 'frame_{:010d}.jpg'.format(index)
     if modality == 'rgb':
         img = Image.open(os.path.join(clip_path.format('rgb', ''), filename)).convert('RGB')
         return [img]
@@ -127,10 +127,11 @@ def input_fn(data_list, params, is_training):
         dataset = (tf.data.Dataset.from_tensor_slices((tf.constant(data_list)))
             .map(parse_test, num_parallel_calls=params.num_parallel_calls)
             .repeat()
-            .batch(1)
+            .batch(params.batch_size)
             .prefetch(1)
         )
-        num_steps = len(data_list)
+        num_steps = (len(data_list) - 1) // params.batch_size + 1
+        #num_steps = len(data_list)
     
     # Create reinitializable iterator from dataset
     iterator = dataset.make_initializable_iterator()
@@ -138,6 +139,7 @@ def input_fn(data_list, params, is_training):
 
     if not is_training:
         words = np.load(os.path.join('data', 'word_embeddings', 'class_keys.npy'))
+        words = tf.constant(words, dtype=tf.float32)
     
     clips.set_shape([None, None, 224, 224, 3])
     words.set_shape([None, 100])

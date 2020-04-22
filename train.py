@@ -17,6 +17,12 @@ parser = argparse.ArgumentParser()
 parser.add_argument('model_dir', help='Path to the directory with `params.json` file')
 args = parser.parse_args()
 
+def check_dataset(inputs):
+    with tf.Session() as sess:
+        sess.run(inputs['iterator_init_op'])
+        for i in range(5):
+            print(sess.run(inputs['clips']).shape)
+
 if __name__ == "__main__":
     tf.set_random_seed(2020)
     os.environ["CUDA_VISIBLE_DEVICES"]="0"
@@ -39,7 +45,9 @@ if __name__ == "__main__":
 
     valid_data = data_info('valid')
     valid_inputs = input_fn(valid_data, params, False)
-
+    
+    #check_dataset(train_inputs)
+    #check_dataset(valid_inputs)
     # Define the model
     logging.info("Building the model")
     train_model_spec = model_fn(train_inputs, params, is_training=True)

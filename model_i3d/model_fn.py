@@ -54,9 +54,11 @@ def model_fn(inputs, params, is_training):
             if var_name[0] != 'Model':
                 continue
             if var_name[1] == 'RGB' and var_name[2] == 'inception_i3d' and var_name[3] not in top_variables:
-                variable_map[variable.name.replace(':0', '')] = variable
-            if var_name[3] in top_variables or var_name[1] in top_variables:
+                variable_map[variable.name.replace(':0', '').replace('Model/', '')] = variable
+            else:
                 train_vars.append(variable)
+            #if var_name[3] in top_variables or var_name[1] in top_variables:
+            #    train_vars.append(variable)
 
         learning_rate = tf.placeholder(tf.float32)
         optimizer = tf.train.AdamOptimizer(learning_rate=learning_rate)
@@ -66,7 +68,11 @@ def model_fn(inputs, params, is_training):
             train_op = optimizer.minimize(total_loss)
         with tf.variable_scope("metrics_train"):
             metrics = {
-                'loss': tf.metrics.mean(total_loss)
+                'loss': tf.metrics.mean(total_loss),
+                'loss_vv': tf.metrics.mean(loss_vv),
+                'loss_tt': tf.metrics.mean(loss_tt),
+                'loss_vt': tf.metrics.mean(loss_vt),
+                'loss_tv': tf.metrics.mean(loss_tv)
             }
     else:
         predictions = compute_predictions(logits_visual, logits_text, labels)
