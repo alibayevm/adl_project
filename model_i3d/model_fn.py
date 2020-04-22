@@ -48,6 +48,7 @@ def model_fn(inputs, params, is_training):
     if is_training:
         variable_map = {}
         train_vars = []
+        conv_vars = []
 
         for variable in tf.global_variables():
             var_name = variable.name.split('/')
@@ -57,6 +58,8 @@ def model_fn(inputs, params, is_training):
                 variable_map[variable.name.replace(':0', '').replace('Model/', '')] = variable
             else:
                 train_vars.append(variable)
+            if len(var_name) > 3 and var_name[3] in ['Mixed_5b', 'Mixed_5c']:
+                conv_vars.append(variable)
             #if var_name[3] in top_variables or var_name[1] in top_variables:
             #    train_vars.append(variable)
 
@@ -65,7 +68,8 @@ def model_fn(inputs, params, is_training):
 
         with tf.control_dependencies(tf.get_collection(tf.GraphKeys.UPDATE_OPS)):
             train_op_initial = optimizer.minimize(total_loss, var_list=train_vars)
-            train_op = optimizer.minimize(total_loss)
+            relaxed_vars = train_vars + conv_vars
+            train_op = optimizer.minimize(total_loss, var_list=relaxed_vars)
         with tf.variable_scope("metrics_train"):
             metrics = {
                 'loss': tf.metrics.mean(total_loss),
