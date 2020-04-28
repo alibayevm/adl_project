@@ -5,6 +5,7 @@ import tensorflow as tf
 import numpy as np
 import matplotlib.pyplot as plt
 from model_i3d.utils import save_dict_to_json
+from model_i3d.utils import Params
 
 
 def train_model(train_model, valid_model, model_dir, params):
@@ -14,19 +15,54 @@ def train_model(train_model, valid_model, model_dir, params):
     last_saver = tf.train.Saver() # will keep last 5 epochs
     best_saver = tf.train.Saver(max_to_keep=1)  # only keep 1 best checkpoint (best on eval)
 
-    restore = tf.train.Saver(var_list=train_model['variable_map'], reshape=True)
+    # Continue training from where it stopped
+    if os.path.isdir(os.path.join(model_dir, 'last_weights')):
+        prompt = input('Continue the training? (y/n): ')
 
+    if os.path.isdir(os.path.join(model_dir, 'last_weights')) and prompt == 'y':
+        all_files = os.listdir(os.path.join(model_dir, 'last_weights'))
+        checkpoints = [f for f in all_files if f.startswith('after-epoch')]
+        epochs = [int(f.split('.')[0].split('-')[-1]) for f in checkpoints]
+        start_epoch = max(epochs)
 
-    with tf.Session() as sess:
-        sess.run(tf.global_variables_initializer())
-        restore.restore(sess, params.restore_path)
+        variable_map = {}
+        for variable in tf.global_variables():
+            var_name = variable.name.split('/')
+            if var_name[0] == 'Model':
+                variable_map[variable.name.replace(':0', '')] = variable
+        
+        restore_path = tf.train.latest_checkpoint(os.path.join(model_dir, 'last_weights'))
+        
+        # Restore the best metric values
+        conf_mat = np.load(os.path.join(model_dir, 'conf_mat.npz'))
+        best_acc = Params(os.path.join(model_dir, 'best_acc.json')).dict['accuracy']
+        conf_mat_acc = conf_mat['conf_mat_acc']
+
+        best_loss = Params(os.path.join(model_dir, 'best_loss.json')).dict['loss']
+        conf_mat_loss = conf_mat['conf_mat_loss']
+
+        best_metric_acc = Params(os.path.join(model_dir, 'best_metrics.json')).dict['accuracy']
+        best_metric_loss = Params(os.path.join(model_dir, 'best_metrics.json')).dict['loss']
+        best_metric = best_metric_loss + 1 - best_metric_acc
+        conf_mat_best = conf_mat['conf_mat_best']
+
+    else:
+        start_epoch = 0
+        variable_map = train_model['variable_map']
+        restore_path = params.restore_path
 
         best_acc = 0.0
         best_loss = float('inf')
         best_metric = float('inf')
-        
 
-        for epoch in range(params.num_epochs):
+    restore = tf.train.Saver(var_list=variable_map, reshape=True)
+
+
+    with tf.Session() as sess:
+        sess.run(tf.global_variables_initializer())
+        restore.restore(sess, restore_path)
+
+        for epoch in range(start_epoch, params.num_epochs):
             logging.info("Epoch {}/{}".format(epoch + 1, params.num_epochs))
             
             # ===================================== Training ==============================================
@@ -87,7 +123,7 @@ def train_model(train_model, valid_model, model_dir, params):
             
             if best_metric > (loss + 1 - accuracy):
                 conf_mat_best = conf_mat
-                best_metric = (loss + 1 - accuracy)
+                best_metric = loss + 1 - accuracy
 
                 save_dict_to_json({'accuracy': accuracy, 'loss': loss}, os.path.join(model_dir, 'best_metrics.json'))
         
