@@ -12,3 +12,9 @@ The repository has the following directories and subdirectories:
 * __model_i3d__ - contains the libraries for building/training/evaluation of the model based on Two Stream I3D.
 * train.py - trains the selected model.
 * test.py - evaluates the selected model.
+
+## How to run training and evaluation
+```
+python train.py path_to_experiment_dir
+python test.py path_to_experiment_dir
+```
