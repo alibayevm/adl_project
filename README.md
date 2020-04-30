@@ -9,22 +9,6 @@ The repository has the following directories and subdirectories:
     * __scirpts__ - contains the script files to build the dataset splits and verb embeddings.
 * __experiments__ - contains the directories of different experiments.
     * __experiment1__ - contains the weights and log files for *experiment1*, as well as the **params.json** file that has all hyper parameters, including the selected baseline model and word embeddings.
-* __model)i3d__ - contains the libraries for building/training/evaluation of the model based on Two Stream I3D.
+* __model_i3d__ - contains the libraries for building/training/evaluation of the model based on Two Stream I3D.
 * train.py - trains the selected model.
 * test.py - evaluates the selected model.
-
-## Task list
-- [x] - Build dataset from many shot verbs. Use 60-20-20 split. Need to figure out if we need a validation set or not. Technically, we need it for one-hot classifier, but not for the model based on embedding. We could have 80/20 split for train/test, then split train into 60/20 train/valid splits when training one-hot representation.
-- [ ] - Get different word embeddings for the verb classes.
-- [ ] - Get word embeddings for each verb in each video.
-- [x] - Come up with the list of hyper parameters for **params.json** files.
-- [ ] - Come up with the list of experiments.
-- [x] - Process videos into TensorFlow dataset object.
-- [x] - Build the model.
-- [ ] - Build the evaluation procedure.
-- [ ] - Build the training procedure.
-- [ ] - Train the models.
-- [ ] - Evaluate the models.
-- [ ] - Train the baseline models with one-hot encoding.
-- [ ] - Compare the embedding strategy with one-hot encoding strategy.
-- [ ] - Think about which metrics to use, can use Precision and Recall along with Accuracy. Dataset is unbalanced, so 1-h method will favor 4/26 huge classes.
