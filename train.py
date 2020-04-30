@@ -13,14 +13,23 @@ from model_epic.model_fn import model_fn, model_onehot
 from model_epic.training import train_and_validate_model
 from model_epic import training_onehot
 
+
+
 parser = argparse.ArgumentParser()
 parser.add_argument('model_dir', help='Path to the directory with `params.json` file')
 parser.add_argument('-p', '--preprocess', action='store_true', help='Whether to preprocess input data or not')
 parser.add_argument('-o', '--onehot', action='store_true', help='Whether to train onehot classifier or not')
 args = parser.parse_args()
 
+def check_dataset(inputs):
+    with tf.Session() as sess:
+        sess.run(inputs['iterator_init_op'])
+        for i in range(5):
+            print(sess.run(inputs['clips']).shape)
+
 if __name__ == "__main__":
-    tf.set_random_seed(230)
+    tf.set_random_seed(2020)
+    os.environ["CUDA_VISIBLE_DEVICES"]="0"
 
     model_dir = args.model_dir
 
@@ -50,30 +59,20 @@ if __name__ == "__main__":
 
     logging.info("Creating the dataset...")
 
-    postfix = '_onehot' if args.onehot else ''
-    train_data = np.load(os.path.join('data', 'preprocessed_train{}.npz'.format(postfix)))
-    valid_data = np.load(os.path.join('data', 'preprocessed_valid{}.npz'.format(postfix)))
+    train_data = data_info('train')
+    train_inputs = input_fn(train_data, params, is_training=True)
 
-    if args.onehot:
-        train_inputs = input_onehot(train_data['rgb'], train_data['flow'], train_data['labels'], params)
-        valid_inputs = input_onehot(valid_data['rgb'], valid_data['flow'], valid_data['labels'], params)
-    else:
-        train_inputs = input_fn(train_data['visuals'], train_data['words'], train_data['labels'], params, is_training=True)
-        valid_inputs = input_fn(valid_data['visuals'], valid_data['words'], valid_data['labels'], params, is_training=False)
-
+    valid_data = data_info('valid')
+    valid_inputs = input_fn(valid_data, params, False)
+    
+    #check_dataset(train_inputs)
+    #check_dataset(valid_inputs)
     # Define the model
     logging.info("Building the model")
-    if args.onehot:
-        train_model_spec = model_onehot(train_inputs, params, mode='train')
-        valid_model_spec = model_onehot(valid_inputs, params, mode='valid')
-    else:
-        train_model_spec = model_fn(train_inputs, params, mode='train')
-        valid_model_spec = model_fn(valid_inputs, params, mode='valid')
+    train_model_spec = model_fn(train_inputs, params, is_training=True)
+    valid_model = model_fn(valid_inputs, params, False)
 
     # Train the model
     # TODO: Implement for onehot
     logging.info("Training the model")
-    if args.onehot:
-        training_onehot.train_and_validate_model(train_model_spec, valid_model_spec, model_dir, params)
-    else:
-        train_and_validate_model(train_model_spec, valid_model_spec, model_dir, params)
+    train_model(train_model_spec, valid_model, model_dir, params)
